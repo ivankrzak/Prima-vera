@@ -177,16 +177,14 @@ export const customerProcedure = protectedProcedure.use(
     });
 
     // Auto-create customer profile if it doesn't exist
-    if (!customer) {
-      customer = await ctx.db.customer.create({
-        data: {
-          userId: ctx.session.user.id,
-          firstName: ctx.session.user.name?.split(" ")[0] ?? "",
-          lastName: ctx.session.user.name?.split(" ").slice(1).join(" ") ?? "",
-          phoneNumber: "",
-        },
-      });
-    }
+    customer ??= await ctx.db.customer.create({
+      data: {
+        userId: ctx.session.user.id,
+        firstName: ctx.session.user.name?.split(" ")[0] ?? "",
+        lastName: ctx.session.user.name?.split(" ").slice(1).join(" ") ?? "",
+        phoneNumber: "",
+      },
+    });
 
     return next({
       ctx: {

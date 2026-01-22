@@ -47,17 +47,15 @@ export const orderRouter = createTRPCRouter({
         });
 
         // Auto-create customer profile if doesn't exist
-        if (!customer) {
-          customer = await ctx.db.customer.create({
-            data: {
-              userId: ctx.session.user.id,
-              firstName: ctx.session.user.name?.split(" ")[0] ?? "",
-              lastName:
-                ctx.session.user.name?.split(" ").slice(1).join(" ") ?? "",
-              phoneNumber: input.deliveryPhone,
-            },
-          });
-        }
+        customer ??= await ctx.db.customer.create({
+          data: {
+            userId: ctx.session.user.id,
+            firstName: ctx.session.user.name?.split(" ")[0] ?? "",
+            lastName:
+              ctx.session.user.name?.split(" ").slice(1).join(" ") ?? "",
+            phoneNumber: input.deliveryPhone,
+          },
+        });
       }
 
       // For guest checkout, require guest info

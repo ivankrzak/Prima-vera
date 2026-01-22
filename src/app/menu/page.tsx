@@ -106,7 +106,7 @@ interface Product {
   name: string;
   description: string | null;
   ingredients: string[];
-  price: number | { toNumber: () => number } | unknown;
+  price: number | { toNumber: () => number };
   imageUrl: string | null;
   category: string;
   available: boolean;
