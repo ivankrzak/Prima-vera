@@ -384,8 +384,8 @@ export const orderRouter = createTRPCRouter({
             data: { status: input.status },
           });
 
-          // Award points to customer
-          if (order.pointsEarned > 0) {
+          // Award points to customer (only for registered customers)
+          if (order.pointsEarned > 0 && order.customerId) {
             await tx.customer.update({
               where: { id: order.customerId },
               data: {
