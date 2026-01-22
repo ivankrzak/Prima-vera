@@ -46,6 +46,7 @@ export function initAuth(options: {
       "expo://",
       "http://localhost:3000",
       "http://localhost:3001",
+      "https://prima-vera.vercel.app",
     ],
   } satisfies BetterAuthOptions;
 
