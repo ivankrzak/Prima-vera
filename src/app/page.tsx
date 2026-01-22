@@ -485,6 +485,133 @@ export default function Home() {
         </motion.div>
       </section>
 
+      {/* Map Section */}
+      <section className="bg-[var(--color-bg)] py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+            {/* Text Content */}
+            <motion.div
+              initial={{ opacity: 0, x: -40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6 }}
+              className="text-center lg:text-left"
+            >
+              <span className="mb-4 inline-block text-4xl">📍</span>
+              <h2 className="font-heading text-3xl font-bold text-[var(--color-text)] md:text-4xl">
+                Navštívte nás v Košiciach-Barca
+              </h2>
+              <p className="mt-4 text-lg leading-relaxed text-[var(--color-text-muted)]">
+                Príďte ochutnať pravú taliansku pizzu priamo z našej pece.
+                Nájdete nás na Hlavnej ulici, kde vás privítame s úsmevom a
+                vôňou čerstvo upečenej pizze.
+              </p>
+
+              <div className="mt-8 space-y-4">
+                <div className="flex items-center justify-center gap-3 lg:justify-start">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-brand)]/10 text-[var(--color-brand)]">
+                    🏠
+                  </div>
+                  <div>
+                    <p className="font-medium text-[var(--color-text)]">
+                      Svätého Ladislava 2, 040 14 Košice
+                    </p>
+                    <p className="text-sm text-[var(--color-text-muted)]">
+                      Pekáreň Barca
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-center gap-3 lg:justify-start">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-brand)]/10 text-[var(--color-brand)]">
+                    🕐
+                  </div>
+                  <div>
+                    <p className="font-medium text-[var(--color-text)]">
+                      Po-Ne: 10:00 - 22:00
+                    </p>
+                    <p className="text-sm text-[var(--color-text-muted)]">
+                      Otvorené každý deň
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-center gap-3 lg:justify-start">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-brand)]/10 text-[var(--color-brand)]">
+                    📞
+                  </div>
+                  <div>
+                    <p className="font-medium text-[var(--color-text)]">
+                      +421 900 123 456
+                    </p>
+                    <p className="text-sm text-[var(--color-text-muted)]">
+                      Rezervácie a objednávky
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <motion.a
+                href="https://maps.google.com/?q=Pekáreň+Barca+Svätého+Ladislava+2+Košice"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-8 inline-flex items-center gap-2 rounded-full bg-[var(--color-brand)] px-6 py-3 font-medium text-white transition-all hover:bg-[var(--color-brand-dark)] hover:shadow-lg"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                Otvoriť v Google Maps
+              </motion.a>
+            </motion.div>
+
+            {/* Map Embed */}
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="relative"
+            >
+              <div className="overflow-hidden rounded-2xl shadow-2xl">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2633.5!2d21.2789!3d48.6892!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x473ee1a3b5b5b5b5%3A0x400f7d1c6978bd0!2sSv%C3%A4t%C3%A9ho%20Ladislava%202%2C%20040%2014%20Ko%C5%A1ice-Barca!5e0!3m2!1ssk!2ssk!4v1705936000000!5m2!1ssk!2ssk"
+                  width="100%"
+                  height="450"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="w-full"
+                  title="PrimaVera lokácia"
+                />
+              </div>
+
+              {/* Decorative elements */}
+              <div className="absolute -bottom-4 -left-4 -z-10 h-full w-full rounded-2xl bg-[var(--color-brand)]/10" />
+              <div className="absolute -top-2 -right-2 text-4xl">🍕</div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-[var(--color-border)] bg-[var(--color-bg-warm)] py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -554,8 +681,8 @@ export default function Home() {
               <h4 className="font-medium text-[var(--color-text)]">Kontakt</h4>
               <ul className="mt-4 space-y-3 text-sm text-[var(--color-text-secondary)]">
                 <li className="flex items-center gap-2">
-                  <span className="text-[var(--color-brand)]">📍</span> Hlavná
-                  123, Košice
+                  <span className="text-[var(--color-brand)]">📍</span> Svätého
+                  Ladislava 2, Košice-Barca
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="text-[var(--color-brand)]">📞</span> +421 900
