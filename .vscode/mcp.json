@@ -6,6 +6,19 @@
       "headers": {
         "nonce": "df4cafb5-33ff-464f-a29f-1a9fa080d0c8"
       }
+    },
+    "motion": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "https://api.motion.dev/registry.tgz?package=motion-studio-mcp&version=latest"
+      ],
+      "env": {
+        "TOKEN": "7eead5e730898437402f91af72c7bf0c2717f3ed227fb9e06f608266af0b4e3e"
+      }
+    },
+    "klaviyo": {
+      "url": "https://mcp.klaviyo.com/mcp"
     }
   }
 }

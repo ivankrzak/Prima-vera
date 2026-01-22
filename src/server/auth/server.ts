@@ -10,12 +10,10 @@ import { oAuthProxy, username } from "better-auth/plugins";
 import { db } from "../db";
 import { env } from "process";
 
-
 export function initAuth(options: {
   baseUrl: string;
   productionUrl: string;
   secret: string | undefined;
-
 }) {
   const config = {
     database: prismaAdapter(db, {
@@ -44,7 +42,11 @@ export function initAuth(options: {
         clientSecret: "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",
       },
     },
-    trustedOrigins: ["expo://"],
+    trustedOrigins: [
+      "expo://",
+      "http://localhost:3000",
+      "http://localhost:3001",
+    ],
   } satisfies BetterAuthOptions;
 
   return betterAuth(config);

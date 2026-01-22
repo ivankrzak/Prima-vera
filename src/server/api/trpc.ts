@@ -138,3 +138,60 @@ export const protectedProcedure = t.procedure
       },
     });
   });
+
+/**
+ * Admin procedure
+ *
+ * Only accessible to users with an Admin record in the database.
+ * Used for managing orders, menu items, and other admin-only operations.
+ */
+export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  const admin = await ctx.db.admin.findUnique({
+    where: { userId: ctx.session.user.id },
+  });
+
+  if (!admin) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Admin access required",
+    });
+  }
+
+  return next({
+    ctx: {
+      admin,
+    },
+  });
+});
+
+/**
+ * Customer procedure
+ *
+ * Accessible to users with a Customer record in the database.
+ * Automatically fetches or creates customer profile.
+ */
+export const customerProcedure = protectedProcedure.use(
+  async ({ ctx, next }) => {
+    let customer = await ctx.db.customer.findUnique({
+      where: { userId: ctx.session.user.id },
+    });
+
+    // Auto-create customer profile if it doesn't exist
+    if (!customer) {
+      customer = await ctx.db.customer.create({
+        data: {
+          userId: ctx.session.user.id,
+          firstName: ctx.session.user.name?.split(" ")[0] ?? "",
+          lastName: ctx.session.user.name?.split(" ").slice(1).join(" ") ?? "",
+          phoneNumber: "",
+        },
+      });
+    }
+
+    return next({
+      ctx: {
+        customer,
+      },
+    });
+  },
+);

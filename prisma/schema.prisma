@@ -103,16 +103,128 @@ model Admin {
 }
 
 model Customer {
-    id               String   @id @default(cuid())
+    id               String    @id @default(cuid())
     firstName        String
     lastName         String
     phoneNumber      String
-    dateOfBirth      DateTime
+    dateOfBirth      DateTime?
     gender           String?
-    createdAt        DateTime @default(now())
-    updatedAt        DateTime @updatedAt
+    createdAt        DateTime  @default(now())
+    updatedAt        DateTime  @updatedAt
     stripeCustomerId String?
 
-    userId String @unique
-    user   User   @relation(fields: [userId], references: [id])
+    // Loyalty system
+    pointsBalance Int @default(0)
+
+    // Delivery info
+    deliveryAddress String?
+    city            String?
+    postalCode      String?
+
+    userId String  @unique
+    user   User    @relation(fields: [userId], references: [id])
+    orders Order[]
+}
+
+// ============================================
+// PIZZA ORDERING SYSTEM
+// ============================================
+
+enum OrderStatus {
+    PENDING
+    CONFIRMED
+    PREPARING
+    READY
+    OUT_FOR_DELIVERY
+    DELIVERED
+    CANCELLED
+}
+
+enum PaymentMethod {
+    CASH_ON_DELIVERY
+    CARD_ON_DELIVERY
+}
+
+enum DeliveryType {
+    PICKUP
+    DELIVERY
+}
+
+model Product {
+    id          String   @id @default(cuid())
+    name        String
+    description String?
+    ingredients String[] // Array of ingredient names
+    price       Decimal  @db.Decimal(10, 2) // Price in EUR
+    imageUrl    String?
+    category    String   @default("pizza") // pizza, drink, side, dessert
+    available   Boolean  @default(true)
+    sortOrder   Int      @default(0)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    orderItems OrderItem[]
+
+    @@index([category])
+    @@index([available])
+}
+
+model Order {
+    id            String        @id @default(cuid())
+    orderNumber   Int           @default(autoincrement())
+    customerId    String?
+    status        OrderStatus   @default(PENDING)
+    totalPrice    Decimal       @db.Decimal(10, 2)
+    pointsEarned  Int           @default(0)
+    pointsUsed    Int           @default(0)
+    deliveryType  DeliveryType  @default(DELIVERY)
+    paymentMethod PaymentMethod @default(CASH_ON_DELIVERY)
+
+    // Guest checkout info (used when customerId is null)
+    guestEmail     String?
+    guestFirstName String?
+    guestLastName  String?
+
+    // Delivery details (snapshot at order time)
+    deliveryAddress    String?
+    deliveryCity       String?
+    deliveryPostalCode String?
+    deliveryPhone      String?
+
+    notes String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    customer Customer?   @relation(fields: [customerId], references: [id])
+    items    OrderItem[]
+
+    @@index([customerId])
+    @@index([status])
+    @@index([createdAt])
+}
+
+model OrderItem {
+    id          String  @id @default(cuid())
+    orderId     String
+    productId   String
+    quantity    Int
+    priceAtTime Decimal @db.Decimal(10, 2) // Price snapshot when ordered
+
+    order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+    product Product @relation(fields: [productId], references: [id])
+
+    @@index([orderId])
+}
+
+model PointsTransaction {
+    id         String   @id @default(cuid())
+    customerId String
+    amount     Int // Positive for earned, negative for spent
+    reason     String // e.g., "Order #123", "Redeemed for discount"
+    orderId    String? // Optional link to order
+    createdAt  DateTime @default(now())
+
+    @@index([customerId])
 }

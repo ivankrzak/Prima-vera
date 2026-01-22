@@ -3,4 +3,93 @@
 @theme {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  /* Elegant Italian Color Palette */
+  --color-brand: #c45c3e;           /* Terracotta */
+  --color-brand-dark: #a84a2f;
+  --color-brand-light: #d4725a;
+  --color-accent: #5a7247;          /* Olive green */
+  --color-accent-light: #6b8558;
+  --color-gold: #c9a962;            /* Tuscan gold */
+  
+  /* Light warm backgrounds */
+  --color-bg: #faf8f5;
+  --color-bg-warm: #f5f0e8;
+  --color-bg-elevated: #fdfcfa;
+  --color-bg-card: #ffffff;
+  --color-bg-card-hover: #faf8f5;
+  
+  /* Text colors */
+  --color-text: #2c2416;
+  --color-text-secondary: #6b5d4d;
+  --color-text-muted: #9a8b78;
+  
+  /* Borders */
+  --color-border: #e8e2d9;
+  --color-border-light: #f0ebe3;
+
+  /* Status colors */
+  --color-success: #5a7247;
+  --color-warning: #c9a962;
+  --color-error: #c45c3e;
+  --color-info: #5a7a8a;
+}
+
+/* Base styles */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* Selection */
+::selection {
+  background-color: var(--color-brand);
+  color: white;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-warm);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* Decorative line */
+.decorative-line {
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-brand), transparent);
+}
+
+/* Elegant card shadow */
+.card-shadow {
+  box-shadow: 0 2px 8px rgba(44, 36, 22, 0.06), 0 1px 2px rgba(44, 36, 22, 0.04);
+}
+
+.card-shadow-hover:hover {
+  box-shadow: 0 8px 24px rgba(44, 36, 22, 0.1), 0 2px 8px rgba(44, 36, 22, 0.06);
+}
+
+/* Smooth image transitions */
+.img-elegant {
+  transition: transform 0.5s ease;
+}
+
+.img-elegant:hover {
+  transform: scale(1.03);
 }
