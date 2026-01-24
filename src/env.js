@@ -20,6 +20,10 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
+    // Bunny CDN (optional - for media management)
+    BUNNY_CDN_API_KEY: z.string().optional(),
+    BUNNY_CDN_STORAGE_ZONE_BASE_URL: z.string().optional(), // e.g., https://storage.bunnycdn.com/prima-vera-storage
+    BUNNY_CDN_PUBLIC_URL: z.string().optional(), // e.g., https://prima-vera.b-cdn.net
   },
 
   /**
@@ -43,6 +47,9 @@ export const env = createEnv({
     AUTH_GOOGLE_SECRET: process.env.AUTH_GOOGLE_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
+    BUNNY_CDN_API_KEY: process.env.BUNNY_CDN_API_KEY,
+    BUNNY_CDN_STORAGE_ZONE_BASE_URL: process.env.BUNNY_CDN_STORAGE_ZONE_BASE_URL,
+    BUNNY_CDN_PUBLIC_URL: process.env.BUNNY_CDN_PUBLIC_URL,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

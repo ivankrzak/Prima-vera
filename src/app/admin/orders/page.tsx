@@ -2,7 +2,9 @@
 
 import { api } from "@/trpc/react";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { OrderStatus } from "@prisma/client";
+import { Button, Dialog } from "@/components/ui";
 
 const statusConfig: Record<
   string,
@@ -54,8 +56,42 @@ const statusFlow: OrderStatus[] = [
   "DELIVERED",
 ];
 
+interface Order {
+  id: string;
+  orderNumber: number;
+  status: OrderStatus;
+  totalPrice: unknown;
+  deliveryType: string;
+  paymentMethod: string;
+  deliveryAddress: string | null;
+  deliveryCity: string | null;
+  deliveryPhone: string | null;
+  notes: string | null;
+  createdAt: Date;
+  customer: {
+    firstName: string;
+    lastName: string;
+    user: { email: string | null };
+  } | null;
+  guestEmail?: string;
+  guestFirstName?: string;
+  guestLastName?: string;
+  items: {
+    id: string;
+    quantity: number;
+    priceAtTime: unknown;
+    product: { name: string };
+  }[];
+}
+
 export default function AdminOrdersPage() {
-  const [filterStatus, setFilterStatus] = useState<OrderStatus | null>(null);
+  const searchParams = useSearchParams();
+  const initialStatus = searchParams.get("status") as OrderStatus | null;
+
+  const [filterStatus, setFilterStatus] = useState<OrderStatus | null>(
+    initialStatus,
+  );
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const { data: stats } = api.order.stats.useQuery();
   const {
@@ -73,7 +109,7 @@ export default function AdminOrdersPage() {
     },
   });
 
-  const orders = ordersData?.orders ?? [];
+  const orders = (ordersData?.orders ?? []) as Order[];
 
   const getNextStatus = (current: OrderStatus): OrderStatus | null => {
     const idx = statusFlow.indexOf(current);
@@ -83,128 +119,154 @@ export default function AdminOrdersPage() {
     return null;
   };
 
+  const getCustomerName = (order: Order): string => {
+    if (order.customer) {
+      return `${order.customer.firstName} ${order.customer.lastName}`;
+    }
+    return (
+      `${order.guestFirstName ?? ""} ${order.guestLastName ?? ""}`.trim() ||
+      "Hosť"
+    );
+  };
+
+  const getCustomerEmail = (order: Order): string => {
+    return order.customer?.user.email ?? order.guestEmail ?? "";
+  };
+
   return (
-    <div className="min-h-screen bg-[var(--color-bg)]">
-      <div className="mx-auto max-w-7xl px-4 py-12">
-        <div className="mb-10 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-light text-[var(--color-text)]">
-              Admin{" "}
-              <span className="font-serif text-[var(--color-brand)] italic">
-                Panel
-              </span>
-            </h1>
-            <div className="mt-2 h-px w-16 bg-[var(--color-brand)]" />
-          </div>
-          <button
-            onClick={() => void refetch()}
-            className="flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-bg-card)] px-5 py-2.5 text-sm font-medium text-[var(--color-text)] transition-all hover:border-[var(--color-brand)]"
-          >
-            ↻ Obnoviť
-          </button>
+    <div className="space-y-6">
+      {/* Page header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-[var(--color-text)]">
+            Objednávky
+          </h1>
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+            Spravujte objednávky a sledujte ich stav
+          </p>
         </div>
+        <Button variant="secondary" onClick={() => void refetch()}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="mr-2 h-4 w-4"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
+            />
+          </svg>
+          Obnoviť
+        </Button>
+      </div>
 
-        {/* Stats */}
-        {stats && (
-          <div className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-6 shadow-sm">
-              <p className="text-sm text-[var(--color-text-secondary)]">
-                Dnes objednávok
-              </p>
-              <p className="text-4xl font-light text-[var(--color-text)]">
-                {stats.todayOrders}
-              </p>
-            </div>
-            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-6 shadow-sm">
-              <p className="text-sm text-[var(--color-text-secondary)]">
-                _Čakajúce
-              </p>
-              <p className="text-4xl font-light text-[var(--color-gold)]">
-                {stats.pendingOrders}
-              </p>
-            </div>
-            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-6 shadow-sm">
-              <p className="text-sm text-[var(--color-text-secondary)]">
-                Dnešný obrat
-              </p>
-              <p className="text-4xl font-light text-[var(--color-brand)]">
-                {Number(stats.todayRevenue).toFixed(2)} €
-              </p>
-            </div>
-            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-6 shadow-sm">
-              <p className="text-sm text-[var(--color-text-secondary)]">
-                Celkom objednávok
-              </p>
-              <p className="text-4xl font-light text-[var(--color-text)]">
-                {stats.totalOrders}
-              </p>
-            </div>
+      {/* Stats cards */}
+      {stats && (
+        <div className="grid gap-4 sm:grid-cols-4">
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+            <p className="text-sm text-[var(--color-text-muted)]">
+              Dnešné objednávky
+            </p>
+            <p className="mt-1 text-2xl font-semibold text-[var(--color-text)]">
+              {stats.todayOrders}
+            </p>
           </div>
-        )}
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+            <p className="text-sm text-[var(--color-text-muted)]">
+              Dnešné tržby
+            </p>
+            <p className="mt-1 text-2xl font-semibold text-[var(--color-accent)]">
+              €{stats.todayRevenue.toFixed(2)}
+            </p>
+          </div>
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+            <p className="text-sm text-[var(--color-text-muted)]">Čakajúce</p>
+            <p className="mt-1 text-2xl font-semibold text-[var(--color-gold)]">
+              {stats.pendingOrders}
+            </p>
+          </div>
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+            <p className="text-sm text-[var(--color-text-muted)]">
+              Celkom objednávok
+            </p>
+            <p className="mt-1 text-2xl font-semibold text-[var(--color-brand)]">
+              {stats.totalOrders}
+            </p>
+          </div>
+        </div>
+      )}
 
-        {/* Active orders for kitchen */}
-        {activeOrders && activeOrders.length > 0 && (
-          <div className="mb-10">
-            <h2 className="mb-6 text-xl font-medium text-[var(--color-text)]">
-              🔥 Aktívne objednávky ({activeOrders.length})
-            </h2>
-            <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-              {activeOrders.map((order) => {
-                const status = statusConfig[order.status];
-                const nextStatus = getNextStatus(order.status);
+      {/* Active orders kanban */}
+      {activeOrders && activeOrders.length > 0 && (
+        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+          <h2 className="mb-4 font-semibold text-[var(--color-text)]">
+            🔥 Aktívne objednávky ({activeOrders.length})
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {activeOrders.map((order) => {
+              const status = statusConfig[order.status];
+              const nextStatus = getNextStatus(order.status);
+              const typedOrder = order as unknown as Order;
 
-                return (
-                  <div
-                    key={order.id}
-                    className="rounded-xl border-2 border-[var(--color-brand)] bg-[var(--color-bg-card)] p-5 shadow-sm"
-                  >
-                    <div className="mb-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg font-semibold text-[var(--color-text)]">
-                          #{order.orderNumber}
-                        </span>
-                        <span
-                          className={`rounded-full border px-3 py-1 text-xs font-medium ${status?.bgColor} ${status?.color}`}
-                        >
-                          {status?.label}
-                        </span>
-                      </div>
-                      <span className="text-sm text-[var(--color-text-secondary)]">
-                        {new Date(order.createdAt).toLocaleTimeString("sk-SK", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+              return (
+                <div
+                  key={order.id}
+                  className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] p-4"
+                >
+                  <div className="mb-3 flex items-start justify-between">
+                    <div>
+                      <span className="text-lg font-semibold text-[var(--color-text)]">
+                        #{order.orderNumber}
+                      </span>
+                      <span
+                        className={`ml-2 rounded-full border px-2 py-0.5 text-xs font-medium ${status?.bgColor} ${status?.color}`}
+                      >
+                        {status?.label}
                       </span>
                     </div>
+                    <span className="text-xs text-[var(--color-text-muted)]">
+                      {new Date(order.createdAt).toLocaleTimeString("sk-SK", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
 
-                    <ul className="mb-4 space-y-1 text-sm">
-                      {order.items.map((item) => (
-                        <li
-                          key={item.id}
-                          className="font-medium text-[var(--color-text)]"
-                        >
-                          {item.quantity}× {item.product.name}
-                        </li>
-                      ))}
-                    </ul>
+                  <p className="text-sm font-medium text-[var(--color-text)]">
+                    {getCustomerName(typedOrder)}
+                  </p>
+                  <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                    {order.items
+                      .map((i) => `${i.quantity}× ${i.product.name}`)
+                      .join(", ")}
+                  </p>
+                  <p className="mt-2 font-medium text-[var(--color-brand)]">
+                    €{Number(order.totalPrice).toFixed(2)}
+                  </p>
 
-                    {order.notes && (
-                      <p className="mb-4 rounded-lg border border-[var(--color-gold)]/30 bg-[var(--color-gold)]/10 p-3 text-sm text-[var(--color-gold)]">
-                        📝 {order.notes}
-                      </p>
-                    )}
+                  {order.notes && (
+                    <p className="mt-2 rounded-lg bg-[var(--color-gold)]/10 p-2 text-xs text-[var(--color-gold)]">
+                      📝 {order.notes}
+                    </p>
+                  )}
 
-                    <div className="mb-4 text-sm text-[var(--color-text-secondary)]">
-                      <p>📞 {order.deliveryPhone}</p>
-                      {order.deliveryAddress && (
-                        <p>
-                          📍 {order.deliveryAddress}, {order.deliveryCity}
-                        </p>
-                      )}
-                    </div>
-
+                  <div className="mt-3 flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setSelectedOrder(typedOrder)}
+                    >
+                      Detail
+                    </Button>
                     {nextStatus && (
-                      <button
+                      <Button
+                        size="sm"
+                        className="flex-1"
                         onClick={() =>
                           updateStatus.mutate({
                             id: order.id,
@@ -212,63 +274,62 @@ export default function AdminOrdersPage() {
                           })
                         }
                         disabled={updateStatus.isPending}
-                        className="w-full rounded-lg bg-[var(--color-brand)] py-3 font-medium text-white shadow-lg transition-all hover:bg-[var(--color-brand-dark)] disabled:opacity-50"
                       >
                         → {statusConfig[nextStatus]?.label}
-                      </button>
+                      </Button>
                     )}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Filter tabs */}
-        <div className="mb-6 flex flex-wrap gap-2">
+      {/* Filter tabs */}
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => setFilterStatus(null)}
+          className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+            filterStatus === null
+              ? "bg-[var(--color-brand)] text-white shadow-lg"
+              : "border border-[var(--color-border)] bg-[var(--color-bg-card)] text-[var(--color-text-secondary)] hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]"
+          }`}
+        >
+          Všetky
+        </button>
+        {(Object.keys(statusConfig) as OrderStatus[]).map((status) => (
           <button
-            onClick={() => setFilterStatus(null)}
-            className={`rounded-full px-5 py-2.5 text-sm font-medium transition-all ${
-              filterStatus === null
+            key={status}
+            onClick={() => setFilterStatus(status)}
+            className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
+              filterStatus === status
                 ? "bg-[var(--color-brand)] text-white shadow-lg"
                 : "border border-[var(--color-border)] bg-[var(--color-bg-card)] text-[var(--color-text-secondary)] hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]"
             }`}
           >
-            Všetky
+            {statusConfig[status]?.label}
           </button>
-          {(Object.keys(statusConfig) as OrderStatus[]).map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilterStatus(status)}
-              className={`rounded-full px-5 py-2.5 text-sm font-medium transition-all ${
-                filterStatus === status
-                  ? "bg-[var(--color-brand)] text-white shadow-lg"
-                  : "border border-[var(--color-border)] bg-[var(--color-bg-card)] text-[var(--color-text-secondary)] hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]"
-              }`}
-            >
-              {statusConfig[status]?.label}
-            </button>
+        ))}
+      </div>
+
+      {/* Orders table */}
+      {isLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-20 animate-pulse rounded-xl bg-[var(--color-bg-warm)]"
+            />
           ))}
         </div>
-
-        {/* Orders table */}
-        {isLoading ? (
-          <div className="space-y-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-24 animate-pulse rounded-xl bg-[var(--color-bg-warm)]"
-              />
-            ))}
-          </div>
-        ) : orders.length === 0 ? (
-          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-16 text-center shadow-sm">
-            <p className="text-[var(--color-text-secondary)]">
-              _Žiadne objednávky
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] shadow-sm">
+      ) : orders.length === 0 ? (
+        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-12 text-center">
+          <p className="text-[var(--color-text-muted)]">Žiadne objednávky</p>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)]">
+          <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="border-b border-[var(--color-border)] bg-[var(--color-bg-warm)]">
                 <tr>
@@ -285,12 +346,15 @@ export default function AdminOrdersPage() {
                     Suma
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-[var(--color-text-secondary)]">
+                    Typ
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-[var(--color-text-secondary)]">
                     Stav
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-[var(--color-text-secondary)]">
                     Čas
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-[var(--color-text-secondary)]">
+                  <th className="px-4 py-3 text-right text-sm font-medium text-[var(--color-text-secondary)]">
                     Akcie
                   </th>
                 </tr>
@@ -299,38 +363,49 @@ export default function AdminOrdersPage() {
                 {orders.map((order) => {
                   const status = statusConfig[order.status];
                   const nextStatus = getNextStatus(order.status);
+                  const typedOrder = order as unknown as Order;
 
                   return (
                     <tr
                       key={order.id}
-                      className="hover:bg-[var(--color-bg-warm)]"
+                      className="transition-colors hover:bg-[var(--color-bg-warm)]"
                     >
-                      <td className="px-4 py-3 font-medium text-[var(--color-text)]">
-                        {order.orderNumber}
+                      <td className="px-4 py-3">
+                        <span className="font-medium text-[var(--color-text)]">
+                          {order.orderNumber}
+                        </span>
                       </td>
                       <td className="px-4 py-3">
                         <p className="font-medium text-[var(--color-text)]">
-                          {order.customer
-                            ? `${order.customer.firstName} ${order.customer.lastName}`
-                            : `${(order as { guestFirstName?: string }).guestFirstName ?? ""} ${(order as { guestLastName?: string }).guestLastName ?? ""}`}
+                          {getCustomerName(typedOrder)}
                           {!order.customer && (
-                            <span className="ml-2 rounded bg-[var(--color-bg-warm)] px-1.5 py-0.5 text-xs text-[var(--color-text-secondary)]">
+                            <span className="ml-2 rounded bg-[var(--color-bg-warm)] px-1.5 py-0.5 text-xs text-[var(--color-text-muted)]">
                               Hosť
                             </span>
                           )}
                         </p>
-                        <p className="text-sm text-[var(--color-text-secondary)]">
-                          {order.customer?.user.email ??
-                            (order as { guestEmail?: string }).guestEmail}
+                        <p className="text-sm text-[var(--color-text-muted)]">
+                          {getCustomerEmail(typedOrder)}
                         </p>
                       </td>
-                      <td className="px-4 py-3 text-sm text-[var(--color-text-secondary)]">
-                        {order.items
-                          .map((i) => `${i.quantity}× ${i.product.name}`)
-                          .join(", ")}
+                      <td className="max-w-[200px] px-4 py-3">
+                        <p className="truncate text-sm text-[var(--color-text-secondary)]">
+                          {order.items
+                            .map((i) => `${i.quantity}× ${i.product.name}`)
+                            .join(", ")}
+                        </p>
                       </td>
-                      <td className="px-4 py-3 font-medium text-[var(--color-brand)]">
-                        {Number(order.totalPrice).toFixed(2)} €
+                      <td className="px-4 py-3">
+                        <span className="font-medium text-[var(--color-brand)]">
+                          €{Number(order.totalPrice).toFixed(2)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-sm text-[var(--color-text-secondary)]">
+                          {order.deliveryType === "PICKUP"
+                            ? "🏪 Výdaj"
+                            : "🚗 Doručenie"}
+                        </span>
                       </td>
                       <td className="px-4 py-3">
                         <span
@@ -339,7 +414,7 @@ export default function AdminOrdersPage() {
                           {status?.label}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-[var(--color-text-secondary)]">
+                      <td className="px-4 py-3 text-sm text-[var(--color-text-muted)]">
                         {new Date(order.createdAt).toLocaleString("sk-SK", {
                           day: "numeric",
                           month: "short",
@@ -348,9 +423,17 @@ export default function AdminOrdersPage() {
                         })}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedOrder(typedOrder)}
+                          >
+                            Detail
+                          </Button>
                           {nextStatus && (
-                            <button
+                            <Button
+                              size="sm"
                               onClick={() =>
                                 updateStatus.mutate({
                                   id: order.id,
@@ -358,14 +441,15 @@ export default function AdminOrdersPage() {
                                 })
                               }
                               disabled={updateStatus.isPending}
-                              className="rounded-lg bg-[var(--color-brand)] px-3 py-1.5 text-sm font-medium text-white transition-all hover:bg-[var(--color-brand-dark)] disabled:opacity-50"
                             >
                               → {statusConfig[nextStatus]?.label}
-                            </button>
+                            </Button>
                           )}
                           {order.status !== "CANCELLED" &&
                             order.status !== "DELIVERED" && (
-                              <button
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() =>
                                   updateStatus.mutate({
                                     id: order.id,
@@ -373,10 +457,10 @@ export default function AdminOrdersPage() {
                                   })
                                 }
                                 disabled={updateStatus.isPending}
-                                className="rounded-lg border border-red-500/30 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600 transition-all hover:bg-red-100 disabled:opacity-50"
+                                className="text-red-600 hover:bg-red-50"
                               >
                                 Zrušiť
-                              </button>
+                              </Button>
                             )}
                         </div>
                       </td>
@@ -386,8 +470,166 @@ export default function AdminOrdersPage() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Order Detail Dialog */}
+      <Dialog
+        open={!!selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+        title={selectedOrder ? `Objednávka #${selectedOrder.orderNumber}` : ""}
+        size="lg"
+      >
+        {selectedOrder && (
+          <div className="space-y-6">
+            {/* Status */}
+            <div className="flex items-center justify-between">
+              <span
+                className={`rounded-full border px-4 py-1.5 text-sm font-medium ${statusConfig[selectedOrder.status]?.bgColor} ${statusConfig[selectedOrder.status]?.color}`}
+              >
+                {statusConfig[selectedOrder.status]?.label}
+              </span>
+              <span className="text-sm text-[var(--color-text-muted)]">
+                {new Date(selectedOrder.createdAt).toLocaleString("sk-SK")}
+              </span>
+            </div>
+
+            {/* Customer info */}
+            <div className="rounded-lg bg-[var(--color-bg-warm)] p-4">
+              <h3 className="mb-2 text-sm font-medium text-[var(--color-text-muted)]">
+                Zákazník
+              </h3>
+              <p className="font-medium text-[var(--color-text)]">
+                {getCustomerName(selectedOrder)}
+                {!selectedOrder.customer && (
+                  <span className="ml-2 rounded bg-[var(--color-bg-card)] px-1.5 py-0.5 text-xs text-[var(--color-text-muted)]">
+                    Hosť
+                  </span>
+                )}
+              </p>
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                {getCustomerEmail(selectedOrder)}
+              </p>
+              {selectedOrder.deliveryPhone && (
+                <p className="text-sm text-[var(--color-text-secondary)]">
+                  📞 {selectedOrder.deliveryPhone}
+                </p>
+              )}
+            </div>
+
+            {/* Delivery info */}
+            <div className="rounded-lg bg-[var(--color-bg-warm)] p-4">
+              <h3 className="mb-2 text-sm font-medium text-[var(--color-text-muted)]">
+                Doručenie
+              </h3>
+              <p className="font-medium text-[var(--color-text)]">
+                {selectedOrder.deliveryType === "PICKUP"
+                  ? "🏪 Osobný odber"
+                  : "🚗 Doručenie na adresu"}
+              </p>
+              {selectedOrder.deliveryType === "DELIVERY" &&
+                selectedOrder.deliveryAddress && (
+                  <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+                    {selectedOrder.deliveryAddress},{" "}
+                    {selectedOrder.deliveryCity}
+                  </p>
+                )}
+              <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+                Platba:{" "}
+                {selectedOrder.paymentMethod === "CASH_ON_DELIVERY"
+                  ? "💵 Hotovosť"
+                  : "💳 Kartou"}
+              </p>
+            </div>
+
+            {/* Items */}
+            <div>
+              <h3 className="mb-3 text-sm font-medium text-[var(--color-text-muted)]">
+                Položky
+              </h3>
+              <div className="space-y-2">
+                {selectedOrder.items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between rounded-lg border border-[var(--color-border)] p-3"
+                  >
+                    <div>
+                      <span className="font-medium text-[var(--color-text)]">
+                        {item.quantity}× {item.product.name}
+                      </span>
+                    </div>
+                    <span className="text-[var(--color-text-secondary)]">
+                      €{(Number(item.priceAtTime) * item.quantity).toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 flex justify-between border-t border-[var(--color-border)] pt-4">
+                <span className="font-medium text-[var(--color-text)]">
+                  Celkom
+                </span>
+                <span className="text-xl font-semibold text-[var(--color-brand)]">
+                  €{Number(selectedOrder.totalPrice).toFixed(2)}
+                </span>
+              </div>
+            </div>
+
+            {/* Notes */}
+            {selectedOrder.notes && (
+              <div className="rounded-lg bg-[var(--color-gold)]/10 p-4">
+                <h3 className="mb-1 text-sm font-medium text-[var(--color-gold)]">
+                  Poznámka
+                </h3>
+                <p className="text-sm text-[var(--color-text)]">
+                  {selectedOrder.notes}
+                </p>
+              </div>
+            )}
+
+            {/* Actions */}
+            {selectedOrder.status !== "DELIVERED" &&
+              selectedOrder.status !== "CANCELLED" && (
+                <div className="flex gap-3 border-t border-[var(--color-border)] pt-4">
+                  {getNextStatus(selectedOrder.status) && (
+                    <Button
+                      className="flex-1"
+                      onClick={() => {
+                        const next = getNextStatus(selectedOrder.status);
+                        if (next) {
+                          updateStatus.mutate({
+                            id: selectedOrder.id,
+                            status: next,
+                          });
+                          setSelectedOrder(null);
+                        }
+                      }}
+                      disabled={updateStatus.isPending}
+                    >
+                      Posunúť na:{" "}
+                      {
+                        statusConfig[getNextStatus(selectedOrder.status)!]
+                          ?.label
+                      }
+                    </Button>
+                  )}
+                  <Button
+                    variant="danger"
+                    onClick={() => {
+                      updateStatus.mutate({
+                        id: selectedOrder.id,
+                        status: "CANCELLED",
+                      });
+                      setSelectedOrder(null);
+                    }}
+                    disabled={updateStatus.isPending}
+                  >
+                    Zrušiť objednávku
+                  </Button>
+                </div>
+              )}
+          </div>
         )}
-      </div>
+      </Dialog>
     </div>
   );
 }
