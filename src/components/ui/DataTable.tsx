@@ -182,12 +182,20 @@ export function DataTable<T extends Record<string, unknown>>({
                   >
                     {columns.map((column) => {
                       const value = item[column.key];
-                      const displayValue =
-                        value === null || value === undefined
-                          ? ""
-                          : typeof value === "object"
-                            ? JSON.stringify(value)
-                            : String(value);
+                      let displayValue: string;
+                      if (value === null || value === undefined) {
+                        displayValue = "";
+                      } else if (typeof value === "object") {
+                        displayValue = JSON.stringify(value);
+                      } else if (
+                        typeof value === "string" ||
+                        typeof value === "number" ||
+                        typeof value === "boolean"
+                      ) {
+                        displayValue = String(value);
+                      } else {
+                        displayValue = "";
+                      }
                       return (
                         <td
                           key={column.key}

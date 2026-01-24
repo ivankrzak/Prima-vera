@@ -1,21 +1,19 @@
 import { z } from "zod";
 import { createTRPCRouter, adminProcedure } from "../trpc";
 
-const bunnyCdnFileSchema = z.object({
-  Guid: z.string(),
-  StorageZoneName: z.string(),
-  Path: z.string(),
-  ObjectName: z.string(),
-  Length: z.number(),
-  LastChanged: z.string(),
-  ServerId: z.number(),
-  IsDirectory: z.boolean(),
-  UserId: z.string(),
-  DateCreated: z.string(),
-  StorageZoneId: z.number(),
-});
-
-type BunnyCdnFile = z.infer<typeof bunnyCdnFileSchema>;
+interface BunnyCdnFile {
+  Guid: string;
+  StorageZoneName: string;
+  Path: string;
+  ObjectName: string;
+  Length: number;
+  LastChanged: string;
+  ServerId: number;
+  IsDirectory: boolean;
+  UserId: string;
+  DateCreated: string;
+  StorageZoneId: number;
+}
 
 export const mediaRouter = createTRPCRouter({
   list: adminProcedure

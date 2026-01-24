@@ -82,7 +82,7 @@ export function MediaExplorerDialog({
               });
               resolve();
             } catch (err) {
-              reject(err);
+              reject(err instanceof Error ? err : new Error(String(err)));
             }
           } else {
             reject(new Error("Failed to read file"));

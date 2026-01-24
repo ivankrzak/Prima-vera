@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { Suspense, useState, type ReactNode } from "react";
 
 interface NavItem {
   href: string;
@@ -251,7 +251,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </header>
 
         {/* Page content */}
-        <main className="p-4 lg:p-6">{children}</main>
+        <Suspense>
+          <main className="p-4 lg:p-6">{children}</main>
+        </Suspense>
       </div>
     </div>
   );
