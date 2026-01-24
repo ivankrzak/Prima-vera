@@ -180,16 +180,23 @@ export function DataTable<T extends Record<string, unknown>>({
                     key={keyExtractor(item)}
                     className="transition-colors hover:bg-[var(--color-bg-warm)]"
                   >
-                    {columns.map((column) => (
-                      <td
-                        key={column.key}
-                        className={`px-4 py-3 text-sm text-[var(--color-text)] ${column.className ?? ""}`}
-                      >
-                        {column.render
-                          ? column.render(item)
-                          : String(item[column.key] ?? "")}
-                      </td>
-                    ))}
+                    {columns.map((column) => {
+                      const value = item[column.key];
+                      const displayValue =
+                        value === null || value === undefined
+                          ? ""
+                          : typeof value === "object"
+                            ? JSON.stringify(value)
+                            : String(value);
+                      return (
+                        <td
+                          key={column.key}
+                          className={`px-4 py-3 text-sm text-[var(--color-text)] ${column.className ?? ""}`}
+                        >
+                          {column.render ? column.render(item) : displayValue}
+                        </td>
+                      );
+                    })}
                     {actions && (
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">

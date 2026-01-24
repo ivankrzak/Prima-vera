@@ -88,7 +88,8 @@ export function MediaExplorerDialog({
             reject(new Error("Failed to read file"));
           }
         };
-        reader.onerror = () => reject(reader.error);
+        reader.onerror = () =>
+          reject(new Error(reader.error?.message ?? "Failed to read file"));
       });
     },
     [path, uploadMutation],
